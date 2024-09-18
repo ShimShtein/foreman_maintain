@@ -60,15 +60,15 @@ module Checks
         SQL
       end
 
-      def user_query(flavor)
-        <<~SQL
-          SELECT users.* FROM users
-          INNER JOIN auth_sources ON (auth_sources.id = users.auth_source_id)
-          WHERE auth_sources.type = 'AuthSourceLdap'
-            AND auth_sources.server_type = '#{flavor}'
-            AND users.last_login_on IS NOT NULL
-          ORDER BY users.last_login_on DESC
-        SQL
+        def user_query(flavor)
+          <<~SQL
+            SELECT users.* FROM users
+            INNER JOIN auth_sources ON (auth_sources.id = users.auth_source_id)
+            WHERE auth_sources.type = 'AuthSourceLdap'
+              AND auth_sources.server_type = '#{flavor}'
+              AND users.last_login_on IS NOT NULL
+            ORDER BY users.last_login_on DESC
+          SQL
       end
     end
   end
