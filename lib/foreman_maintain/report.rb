@@ -17,6 +17,10 @@ module ForemanMaintain
       (result || {})['value']
     end
 
+    def table_exists(table)
+      sql_count("information_schema.tables WHERE table_name = '#{table}'").positive?
+    end
+
     def run
       raise NotImplementedError
     end
