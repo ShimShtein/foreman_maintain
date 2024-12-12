@@ -5,27 +5,86 @@ module Checks
         description 'Provisioning facts about the system'
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def run
-        hosts_in_3_months = sql_count("hosts WHERE managed = true AND created_at >= current_date - interval '3 months'")
+        hosts_in_3_months =
+          sql_count(
+            <<-SQL
+              hosts WHERE managed = true AND created_at >= current_date - interval '3 months'
+            SQL
+          )
 
         # Compute resources
-        compute_resources_by_type = feature(:foreman_database).query("select type, count(*) from compute_resources group by type").map { |row| [row['type'], row['count']]}.to_h
+        compute_resources_by_type =
+          feature(:foreman_database).
+          query(
+            <<-SQL
+              select type, count(*)
+              from compute_resources
+              group by type
+            SQL
+          ).
+          to_h { |row| [row['type'], row['count']] }
 
-        hosts_by_compute_resources_type = feature(:foreman_database).query("select compute_resources.type, count(hosts.id) from hosts left outer join compute_resources on compute_resource_id = compute_resources.id group by compute_resources.type").map { |row| [row['type'] || 'baremetal', row['count']]}.to_h
-        hosts_by_compute_profile = feature(:foreman_database).query("select max(compute_profiles.name) as name, count(hosts.id) from hosts left outer join compute_profiles on compute_profile_id = compute_profiles.id group by compute_profile_id").map { |row| [row['name'] || 'none', row['count']]}.to_h
+        hosts_by_compute_resources_type =
+          feature(:foreman_database).
+          query(
+            <<-SQL
+              select compute_resources.type, count(hosts.id)
+              from hosts left outer join compute_resources on compute_resource_id = compute_resources.id
+              group by compute_resources.type
+            SQL
+          ).
+          to_h { |row| [row['type'] || 'baremetal', row['count']] }
+        hosts_by_compute_profile =
+          feature(:foreman_database).
+          query(
+            <<-SQL
+              select max(compute_profiles.name) as name, count(hosts.id)
+              from hosts left outer join compute_profiles on compute_profile_id = compute_profiles.id
+              group by compute_profile_id
+            SQL
+          ).
+          to_h { |row| [row['name'] || 'none', row['count']] }
 
         # Bare metal
-        nics_by_type_count = feature(:foreman_database).query("select type, count(*) from nics group by type").map { |row| [row['type'] || 'none', row['count']]}.to_h
+        nics_by_type_count =
+          feature(:foreman_database).
+          query(
+            <<-SQL
+              select type, count(*)
+              from nics
+              group by type
+            SQL
+          ).
+          to_h { |row| [row['type'] || 'none', row['count']] }
         discovery_rules_count = sql_count('discovery_rules')
-        hosts_by_managed_count = feature(:foreman_database).query("select managed, count(*) from hosts group by managed").map { |row| [row['managed'], row['count']]}.to_h
-
+        hosts_by_managed_count =
+          feature(:foreman_database).
+          query(
+            <<-SQL
+              select managed, count(*)
+              from hosts
+              group by managed
+            SQL
+          ).
+          to_h { |row| [row['managed'], row['count']] }
 
         # Templates
-        non_default_templates_per_type = feature(:foreman_database).query("select type, count(*) from templates where templates.default = false group by type").map { |row| [row['type'], row['count']]}.to_h
+        non_default_templates_per_type =
+          feature(:foreman_database).
+          query(
+            <<-SQL
+              select type, count(*) from templates
+              where templates.default = false
+              group by type
+            SQL
+          ).
+          to_h { |row| [row['type'], row['count']] }
 
         data = {
           discovery_rules_count: discovery_rules_count,
-          managed_hosts_created_in_last_3_months: hosts_in_3_months
+          managed_hosts_created_in_last_3_months: hosts_in_3_months,
         }
         data.merge!(flatten(compute_resources_by_type, 'compute_resources_by_type'))
         data.merge!(flatten(hosts_by_compute_resources_type, 'hosts_by_compute_resources_type'))
@@ -36,6 +95,7 @@ module Checks
 
         self.data = data
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
     end
   end
 end
