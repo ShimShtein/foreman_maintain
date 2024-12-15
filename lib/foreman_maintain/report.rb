@@ -7,8 +7,13 @@ module ForemanMaintain
 
     attr_accessor :data
 
-    def sql_count(sql, column: '*')
-      feature(:foreman_database).query("SELECT COUNT(#{column}) FROM #{sql}").first['count'].to_i
+    def sql_count(sql, column: '*', cte: '')
+      sql_as_count("COUNT(#{column})", sql, cte: cte)
+    end
+
+    def sql_as_count(selection, sql, cte: '')
+      query = "#{cte} SELECT #{selection} AS COUNT FROM #{sql}"
+      feature(:foreman_database).query(query).first['count'].to_i
     end
 
     def sql_setting(name)
@@ -30,7 +35,7 @@ module ForemanMaintain
       super
     rescue Error::Fail => e
       set_fail(e.message)
-    rescue Error::Warn => e
+    rescue StandardError => e
       set_warn(e.message)
     end
   end
