@@ -26,7 +26,11 @@ module Checks
           to_h { |row| [row['type'], row['count']] }
 
         # Settings
-        modified_settings = feature(:foreman_database).query("select name from settings")
+        modified_settings =
+          feature(:foreman_database).
+          query("select name from settings").
+          map { |setting_line| setting_line['name'] }.
+          join(',')
 
         # User groups
         user_groups_count = sql_count('usergroups')

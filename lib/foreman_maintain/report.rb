@@ -14,7 +14,7 @@ module ForemanMaintain
     def sql_as_count(selection, sql, cte: '')
       query = "#{cte} SELECT #{selection} AS COUNT FROM #{sql}"
       feature(:foreman_database).query(query).first['count'].to_i
-    rescue
+    rescue StandardError
       nil
     end
 
