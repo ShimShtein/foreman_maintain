@@ -23,7 +23,7 @@ module Checks
         taxonomies_counts =
           feature(:foreman_database).
           query("select type, count(*) from taxonomies group by type").
-          to_h { |row| [row['type'], row['count']] }
+          to_h { |row| [row['type'], row['count'].to_i] }
 
         # Settings
         modified_settings =
@@ -47,8 +47,8 @@ module Checks
           ).
           to_h do |row|
             [
-              "#{row['public'] ? 'public' : 'private'}:#{row['owner_type']}",
-              row['count'],
+              "#{row['public'] ? 'public' : 'private'}#{flatten_separator}#{row['owner_type']}",
+              row['count'].to_i,
             ]
           end
         bookmarks_by_owner =
@@ -60,7 +60,12 @@ module Checks
               group by owner_type, owner_id
             SQL
           ).
-          to_h { |row| ["#{row['owner_type']}:#{row['owner_id']}", row['count']] }
+          to_h do |row|
+            [
+              "#{row['owner_type']}#{flatten_separator}#{row['owner_id']}",
+              row['count'].to_i,
+            ]
+          end
 
         # Mail notifications
         users_per_mail_notification =
@@ -72,7 +77,7 @@ module Checks
               group by mail_notification_id
             SQL
           ).
-          to_h { |row| [row['notification_name'], row['count']] }
+          to_h { |row| [row['notification_name'], row['count'].to_i] }
 
         data = {
           smart_proxies_count: smart_proxies_count,
